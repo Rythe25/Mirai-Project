@@ -10,7 +10,7 @@ Route::get('/user', function (Request $request) {
 
 // Skeleton scaffolding — remove once real endpoints replace it.
 Route::get('/ping', fn () => response()->json([
-    'service' => 'mirai-computer-api',
+    'service' => 'mirai-api',
     'db' => DB::connection()->getDatabaseName(),
     'time' => now()->toIso8601String(),
 ]));
