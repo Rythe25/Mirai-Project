@@ -21,7 +21,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',
-        'https://mirai-computer.kandycode.com',
+        'https://mirai.kandycode.com',
     ],
 
     'allowed_origins_patterns' => [],
