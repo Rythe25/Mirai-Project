@@ -2,6 +2,5 @@
 .env.*
 !.env.example
 apps/api/vendor/
-apps/api/storage/
 apps/web/node_modules/
 apps/web/.next/
