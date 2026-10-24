@@ -40,5 +40,17 @@ services:
     depends_on:
       - nginx
 
+  # Fake PayWay for local payment tests: docker compose --profile mock up -d payway-mock
+  payway-mock:
+    image: node:22-alpine
+    profiles: ["mock"]
+    command: node /mock/server.js
+    environment:
+      PAYWAY_MOCK_SCENARIO: ${PAYWAY_MOCK_SCENARIO:-APPROVED}
+    volumes:
+      - ./docker/payway-mock:/mock:ro
+    ports:
+      - "${PAYWAY_MOCK_PORT:-4010}:4010" # host port for Postman / scenario switching
+
 volumes:
   pgdata:

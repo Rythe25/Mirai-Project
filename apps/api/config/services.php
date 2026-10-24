@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    // ABA PayWay. Set ABA_PAYWAY_BASE_URL=http://payway-mock:4010 to test without ABA.
+    'payway' => [
+        'base_url' => rtrim(env('ABA_PAYWAY_BASE_URL') ?: 'https://checkout-sandbox.payway.com.kh', '/'),
+        'merchant_id' => env('ABA_PAYWAY_MERCHANT_ID'),
+        'api_key' => env('ABA_PAYWAY_API_KEY'),
+        'callback_url' => env('ABA_PAYWAY_CALLBACK_URL'), // optional; PayWay must whitelist the domain
+        'lifetime' => (int) (env('ABA_PAYWAY_LIFETIME') ?: 6), // minutes, PayWay minimum is 3
+    ],
+
 ];
