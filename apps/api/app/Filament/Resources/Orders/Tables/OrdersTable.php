@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\Tables;
 
 use App\Enums\OrderStatus;
+use App\Filament\Resources\Orders\Actions\ApprovePaymentAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -27,6 +28,7 @@ class OrdersTable
             ])
             ->recordActions([
                 ViewAction::make(),
+                ApprovePaymentAction::make(),
             ]);
     }
 }

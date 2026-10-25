@@ -30,10 +30,11 @@ export default function PayPage() {
     void startPayment();
   }, [startPayment]);
 
-  // While the QR is open: ask the API every 3 s, tick the countdown every second.
+  // While waiting: ask the API every 3 s (also after expiry, in case staff approve it); tick the countdown.
   const pending = payment?.status === "pending";
+  const waiting = pending || payment?.status === "expired";
   useEffect(() => {
-    if (!pending) return;
+    if (!waiting) return;
     const poll = setInterval(() => {
       api<Payment>(`/orders/${order}/payment`).then(setPayment).catch(() => {});
     }, 3000);
@@ -42,7 +43,7 @@ export default function PayPage() {
       clearInterval(poll);
       clearInterval(tick);
     };
-  }, [order, pending]);
+  }, [order, waiting]);
 
   if (error) return <Shell><p className="text-red-600">{error}</p></Shell>;
   if (!payment) return <Shell><p>Creating your KHQR…</p></Shell>;

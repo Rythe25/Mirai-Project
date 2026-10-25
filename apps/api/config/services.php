@@ -42,6 +42,7 @@ return [
         'api_key' => env('ABA_PAYWAY_API_KEY'),
         'callback_url' => env('ABA_PAYWAY_CALLBACK_URL'), // optional; PayWay must whitelist the domain
         'lifetime' => (int) (env('ABA_PAYWAY_LIFETIME') ?: 6), // minutes, PayWay minimum is 3
+        'env' => env('ABA_PAYWAY_ENV', 'sandbox'), // "sandbox" enables manual approval in the backoffice
     ],
 
 ];

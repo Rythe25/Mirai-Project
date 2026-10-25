@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\Payway\PaywayClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,26 +35,43 @@ class SyncPayment
 
     private function approve(Payment $payment, array $result): Payment
     {
-        return DB::transaction(function () use ($payment, $result) {
-            // Lock so a callback and a poll can't both reduce stock.
+        if ($result['amount'] !== (string) $payment->amount || $result['currency'] !== $payment->currency) {
+            Log::warning('PayWay amount mismatch', [
+                'tran_id' => $payment->tran_id,
+                'expected' => "{$payment->amount} {$payment->currency}",
+                'paid' => "{$result['amount']} {$result['currency']}",
+            ]);
+            $payment->update(['status' => PaymentStatus::Failed]);
+
+            return $payment;
+        }
+
+        return $this->markPaid($payment, $result['apv']);
+    }
+
+    /**
+     * Approve the payment, mark the order paid and reduce stock once.
+     * Called after ABA confirms, or by staff in the sandbox ($confirmedBy set).
+     */
+    public function markPaid(Payment $payment, ?string $apv, ?User $confirmedBy = null): Payment
+    {
+        return DB::transaction(function () use ($payment, $apv, $confirmedBy) {
+            // Lock so a callback, a poll and a staff click can't all reduce stock.
             $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
 
-            if ($payment->status !== PaymentStatus::Pending) {
+            // Staff may also approve a sandbox QR that expired while they were looking.
+            $approvable = $confirmedBy ? [PaymentStatus::Pending, PaymentStatus::Expired] : [PaymentStatus::Pending];
+
+            if (! in_array($payment->status, $approvable, true)) {
                 return $payment;
             }
 
-            if ($result['amount'] !== (string) $payment->amount || $result['currency'] !== $payment->currency) {
-                Log::warning('PayWay amount mismatch', [
-                    'tran_id' => $payment->tran_id,
-                    'expected' => "{$payment->amount} {$payment->currency}",
-                    'paid' => "{$result['amount']} {$result['currency']}",
-                ]);
-                $payment->update(['status' => PaymentStatus::Failed]);
-
-                return $payment;
-            }
-
-            $payment->update(['status' => PaymentStatus::Approved, 'apv' => $result['apv'], 'paid_at' => now()]);
+            $payment->update([
+                'status' => PaymentStatus::Approved,
+                'apv' => $apv,
+                'confirmed_by' => $confirmedBy?->id,
+                'paid_at' => now(),
+            ]);
 
             $order = Order::query()->lockForUpdate()->with('items')->findOrFail($payment->order_id);
 
