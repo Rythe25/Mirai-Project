@@ -4,6 +4,7 @@ namespace App\Services\Payments;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Jobs\TelegramNotifyOrderPaid;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
@@ -80,6 +81,9 @@ class SyncPayment
                     Product::query()->whereKey($item->product_id)->decrement('stock', $item->qty);
                 }
                 $order->update(['status' => OrderStatus::Paid, 'paid_at' => now()]);
+
+                // Queued after the commit, so the job never sees an unpaid order or a rolled-back payment.
+                TelegramNotifyOrderPaid::dispatch($order->id)->afterCommit();
             }
 
             return $payment;

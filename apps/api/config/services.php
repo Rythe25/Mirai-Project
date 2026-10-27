@@ -45,4 +45,10 @@ return [
         'env' => env('ABA_PAYWAY_ENV', 'sandbox'), // "sandbox" enables manual approval in the backoffice
     ],
 
+    // Staff alerts. Token from @BotFather; chat ID of the orders group (a negative number).
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'orders_chat_id' => env('TELEGRAM_ORDERS_CHAT_ID'),
+    ],
+
 ];

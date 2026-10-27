@@ -40,6 +40,18 @@ services:
     depends_on:
       - nginx
 
+  # Background jobs (Telegram; later email + PDF). After changing PHP code: docker compose restart queue
+  queue:
+    build: ./docker/php
+    command: php artisan queue:work --tries=3 --timeout=120
+    user: www-data
+    restart: unless-stopped
+    volumes:
+      - ./apps/api:/var/www/html
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # Fake PayWay for local payment tests: docker compose --profile mock up -d payway-mock
   payway-mock:
     image: node:22-alpine
