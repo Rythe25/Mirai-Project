@@ -7,13 +7,18 @@ export type Product = {
   in_stock: boolean;
 };
 
+export type PaymentMethod = "khqr" | "card";
+
 export type Payment = {
+  method: PaymentMethod;
   tran_id: string;
   status: "pending" | "approved" | "failed" | "expired";
   amount: string;
   currency: string;
   qr_image: string | null;
   deeplink: string | null;
+  /** Signed PayWay card checkout form; only present right after a card payment is started. */
+  checkout?: { action: string; fields: Record<string, string> };
   expires_at: string;
   paid_at: string | null;
   order: { public_id: string; order_no: string; status: string };

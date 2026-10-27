@@ -24,7 +24,7 @@ export default function BuyForm({ products }: { products: Product[] }) {
           items: [{ product_id: Number(form.get("product")), qty: 1 }],
         }),
       });
-      router.push(`/pay/${order.public_id}`);
+      router.push(`/pay/${order.public_id}?method=${form.get("method")}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setBusy(false);
@@ -44,9 +44,17 @@ export default function BuyForm({ products }: { products: Product[] }) {
       </fieldset>
       <input name="name" placeholder="Name" required maxLength={120} className={field} />
       <input name="phone" type="tel" placeholder="Phone, e.g. 012345678" required pattern="\+?[0-9 ]{8,20}" className={field} />
+      <fieldset className="flex gap-4 text-sm">
+        <label className="flex items-center gap-2">
+          <input type="radio" name="method" value="khqr" defaultChecked /> ABA KHQR
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" name="method" value="card" /> Credit / debit card
+        </label>
+      </fieldset>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button disabled={busy} className="rounded bg-zinc-900 p-3 text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900">
-        {busy ? "Creating order…" : "Pay with ABA KHQR"}
+        {busy ? "Creating order…" : "Pay"}
       </button>
     </form>
   );

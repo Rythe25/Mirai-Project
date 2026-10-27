@@ -11,6 +11,8 @@ class PaywayClient
 
     private const CHECK_TRANSACTION = '/api/payment-gateway/v1/payments/check-transaction-2';
 
+    private const PURCHASE = '/api/payment-gateway/v1/payments/purchase';
+
     /**
      * Create an ABA KHQR. Keys are in PayWay's hash order; empty fields still count in the hash.
      *
@@ -49,6 +51,53 @@ class PaywayClient
         }
 
         return $body;
+    }
+
+    /**
+     * Signed Purchase form for PayWay's hosted card checkout. The browser posts it to PayWay,
+     * so card numbers never reach Mirai. Keys are in PayWay's 24-field hash order.
+     *
+     * @return array{action: string, fields: array<string, string>}
+     */
+    public function cardCheckout(string $tranId, string $amount, string $currency, string $returnTo): array
+    {
+        $callback = config('services.payway.callback_url');
+
+        $fields = [
+            'req_time' => $this->reqTime(),
+            'merchant_id' => (string) config('services.payway.merchant_id'),
+            'tran_id' => $tranId,
+            'amount' => (string) (float) $amount,
+            'items' => '',
+            'shipping' => '',
+            'firstname' => '',
+            'lastname' => '',
+            'email' => '',
+            'phone' => '',
+            'type' => 'purchase',
+            'payment_option' => 'cards',
+            'return_url' => $callback ? base64_encode($callback) : '',
+            'cancel_url' => $returnTo,
+            'continue_success_url' => $returnTo,
+            'return_deeplink' => '',
+            'currency' => $currency,
+            'custom_fields' => '',
+            'return_params' => '',
+            'payout' => '',
+            'lifetime' => (string) config('services.payway.lifetime'),
+            'additional_params' => '',
+            'google_pay_token' => '',
+            'skip_success_page' => '',
+        ];
+        $hash = $this->sign(implode('', $fields));
+
+        return [
+            'action' => config('services.payway.base_url').self::PURCHASE,
+            // payment_gate=0: the hosted card checkout even though the profile also has the QR Payment API
+            // (without it PayWay answers with a KHQR). Neither payment_gate nor view_type is hashed.
+            'fields' => array_filter($fields, fn ($value) => $value !== '')
+                + ['hash' => $hash, 'view_type' => 'hosted_view', 'payment_gate' => '0'],
+        ];
     }
 
     /**

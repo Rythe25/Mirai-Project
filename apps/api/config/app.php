@@ -56,6 +56,9 @@ return [
 
     'admin_domain' => env('ADMIN_DOMAIN'),
 
+    // Where PayWay sends card customers back when the request's Origin isn't an allowed storefront.
+    'storefront_url' => env('STOREFRONT_URL', 'http://localhost:3000'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

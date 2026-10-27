@@ -34,7 +34,8 @@ class OrderInfolist
                 ]),
             ]),
             Section::make('Payments')->columnSpanFull()->schema([
-                RepeatableEntry::make('payments')->hiddenLabel()->columns(5)->schema([
+                RepeatableEntry::make('payments')->hiddenLabel()->columns(6)->schema([
+                    TextEntry::make('method')->badge(),
                     TextEntry::make('tran_id')->label('Tran ID')->copyable(),
                     TextEntry::make('status')->badge(),
                     TextEntry::make('apv')->label('APV')->placeholder('—'),
