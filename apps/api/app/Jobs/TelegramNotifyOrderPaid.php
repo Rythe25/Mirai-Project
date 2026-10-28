@@ -4,19 +4,17 @@ namespace App\Jobs;
 
 use App\Enums\PaymentStatus;
 use App\Filament\Resources\Orders\OrderResource;
-use App\Models\NotificationLog;
+use App\Jobs\Concerns\SendsOncePerOrder;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Telegram\TelegramClient;
-use App\Services\Telegram\TelegramException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class TelegramNotifyOrderPaid implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, SendsOncePerOrder;
 
     private const CHANNEL = 'telegram_orders';
 
@@ -33,27 +31,10 @@ class TelegramNotifyOrderPaid implements ShouldQueue
             return;
         }
 
-        // One lock per order + channel, so a retry and a duplicate job can't both send.
-        Cache::lock("notify-{$this->orderId}-".self::CHANNEL, 30)->block(10, function () use ($telegram) {
-            $log = NotificationLog::firstOrCreate(['order_id' => $this->orderId, 'channel' => self::CHANNEL]);
-
-            if ($log->status === 'sent') {
-                return;
-            }
-
+        $this->sendOnce($this->orderId, self::CHANNEL, function () use ($telegram) {
             $order = Order::with('items')->findOrFail($this->orderId);
             $payment = $order->payments()->where('status', PaymentStatus::Approved)->latest('id')->first();
-            $log->increment('attempts');
-
-            try {
-                $telegram->sendToOrdersChat($this->message($order, $payment));
-            } catch (TelegramException $e) {
-                $log->update(['status' => 'failed', 'last_error' => $e->getMessage()]);
-
-                throw $e; // the queue retries it
-            }
-
-            $log->update(['status' => 'sent', 'sent_at' => now(), 'last_error' => null]);
+            $telegram->sendToOrdersChat($this->message($order, $payment));
         });
     }
 

@@ -43,6 +43,19 @@ class OrderInfolist
                     TextEntry::make('created_at')->dateTime(),
                 ]),
             ]),
+            Section::make('Notifications')->columnSpanFull()->schema([
+                RepeatableEntry::make('notificationLogs')->hiddenLabel()->columns(5)->schema([
+                    TextEntry::make('channel'),
+                    TextEntry::make('status')->badge()->color(fn (string $state): string => match ($state) {
+                        'sent' => 'success',
+                        'failed' => 'danger',
+                        default => 'warning',
+                    }),
+                    TextEntry::make('attempts'),
+                    TextEntry::make('sent_at')->dateTime()->placeholder('—'),
+                    TextEntry::make('last_error')->label('Last error')->placeholder('—'),
+                ]),
+            ]),
         ]);
     }
 }

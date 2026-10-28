@@ -107,7 +107,15 @@ export default function PayPage() {
         {payment.amount} {payment.currency}
       </p>
 
-      {payment.status === "approved" && <p className="text-lg text-green-600">Paid. Thank you!</p>}
+      {payment.status === "approved" && (
+        <>
+          <p className="text-lg text-green-600">Paid. Thank you!</p>
+          <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order}/invoice`} className="underline">
+            Download invoice (PDF)
+          </a>
+          <p className="text-sm text-zinc-500">If you gave an email, a receipt is on its way.</p>
+        </>
+      )}
 
       {pending && !isCard && (
         <>

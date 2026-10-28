@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaywayCallbackController;
@@ -27,5 +28,6 @@ Route::get('/orders/{order:public_id}', [OrderController::class, 'show']);
 
 Route::post('/orders/{order:public_id}/pay', [PaymentController::class, 'store'])->middleware('throttle:10,1');
 Route::get('/orders/{order:public_id}/payment', [PaymentController::class, 'show']);
+Route::get('/orders/{order:public_id}/invoice', [InvoiceController::class, 'show'])->middleware('throttle:30,1');
 
 Route::post('/payway/callback', PaywayCallbackController::class);

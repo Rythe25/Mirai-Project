@@ -20,7 +20,7 @@ export default function BuyForm({ products }: { products: Product[] }) {
       const order = await api<{ public_id: string }>("/orders", {
         method: "POST",
         body: JSON.stringify({
-          customer: { name: form.get("name"), phone: form.get("phone") },
+          customer: { name: form.get("name"), phone: form.get("phone"), email: form.get("email") || null },
           items: [{ product_id: Number(form.get("product")), qty: 1 }],
         }),
       });
@@ -44,6 +44,7 @@ export default function BuyForm({ products }: { products: Product[] }) {
       </fieldset>
       <input name="name" placeholder="Name" required maxLength={120} className={field} />
       <input name="phone" type="tel" placeholder="Phone, e.g. 012345678" required pattern="\+?[0-9 ]{8,20}" className={field} />
+      <input name="email" type="email" placeholder="Email for your receipt (optional)" maxLength={190} className={field} />
       <fieldset className="flex gap-4 text-sm">
         <label className="flex items-center gap-2">
           <input type="radio" name="method" value="khqr" defaultChecked /> ABA KHQR

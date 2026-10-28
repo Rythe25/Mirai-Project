@@ -4,6 +4,7 @@ namespace App\Services\Payments;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Jobs\SendReceiptEmail;
 use App\Jobs\TelegramNotifyOrderPaid;
 use App\Models\Order;
 use App\Models\Payment;
@@ -82,8 +83,9 @@ class SyncPayment
                 }
                 $order->update(['status' => OrderStatus::Paid, 'paid_at' => now()]);
 
-                // Queued after the commit, so the job never sees an unpaid order or a rolled-back payment.
+                // Queued after the commit, so the jobs never see an unpaid order or a rolled-back payment.
                 TelegramNotifyOrderPaid::dispatch($order->id)->afterCommit();
+                SendReceiptEmail::dispatch($order->id)->afterCommit();
             }
 
             return $payment;
