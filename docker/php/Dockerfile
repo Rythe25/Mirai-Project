@@ -1,4 +1,5 @@
-FROM php:8.2-fpm-alpine
+# Pinned to the PHP2Shell fix (CVE-2026-109618/109619). Bump by hand for future PHP security releases.
+FROM php:8.2.35-fpm-alpine
 
 # Match the WSL user (rythe = 1000) so PHP can write storage/ and bootstrap/cache/.
 ARG UID=1000
@@ -11,3 +12,7 @@ RUN apk add --no-cache git unzip icu-dev postgresql-dev libzip-dev shadow \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
+
+# Run php-fpm and `docker compose exec api …` as www-data (uid 1000), so artisan/test/composer
+# never leave root-owned files in storage/ that PHP-FPM can't write. Use `exec -u root` for admin work.
+USER www-data
