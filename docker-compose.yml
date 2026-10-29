@@ -54,7 +54,7 @@ services:
 
   # Fake PayWay for local payment tests: docker compose --profile mock up -d payway-mock
   payway-mock:
-    image: node:22-alpine
+    image: node:24.22.2-alpine
     profiles: ["mock"]
     command: node /mock/server.js
     environment:
