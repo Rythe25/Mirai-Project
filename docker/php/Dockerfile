@@ -7,7 +7,7 @@ ARG GID=1000
 
 # OPcache is built into PHP 8.5 and can no longer be installed as an extension.
 RUN apk add --no-cache git unzip icu-dev postgresql-dev libzip-dev shadow \
- && docker-php-ext-install pdo_pgsql pgsql intl zip bcmath \
+ && docker-php-ext-install pdo_pgsql pgsql intl zip bcmath pcntl \
  && groupmod -o -g ${GID} www-data \
  && usermod -o -u ${UID} -g ${GID} www-data
 
