@@ -27,7 +27,7 @@ class PaywayCallbackController extends Controller
             return response()->json(['message' => 'Unknown transaction.'], 404);
         }
 
-        $sync->handle($payment); // PaywayException → 502, so PayWay retries
+        $sync->handle($payment); // PaywayException → 503, so PayWay retries
 
         return response()->json(['ok' => true]);
     }

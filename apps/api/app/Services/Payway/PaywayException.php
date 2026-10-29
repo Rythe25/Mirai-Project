@@ -9,6 +9,7 @@ class PaywayException extends RuntimeException
 {
     public function render(): JsonResponse
     {
-        return response()->json(['message' => 'ABA PayWay is not available. Try again.'], 502);
+        // 503, not 502: Cloudflare swaps origin 502/504 for its own page, which has no CORS headers.
+        return response()->json(['message' => 'ABA PayWay is not available. Try again.'], 503);
     }
 }
