@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Products\Pages\CreateProduct;
@@ -23,13 +24,27 @@ class BackofficeTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->actingAs(User::factory()->create(['role' => UserRole::Employee]));
+    }
+
+    public function test_a_user_without_a_role_cannot_open_the_backoffice(): void
+    {
         $this->actingAs(User::factory()->create());
+
+        $this->get(ProductResource::getUrl('index'))->assertForbidden();
+    }
+
+    public function test_every_role_can_open_the_backoffice(): void
+    {
+        foreach (UserRole::cases() as $role) {
+            $this->actingAs(User::factory()->create(['role' => $role]));
+
+            $this->get(ProductResource::getUrl('index'))->assertOk();
+        }
     }
 
     public function test_backoffice_pages_render(): void
     {
-        // User doesn't implement FilamentUser yet, so Filament only lets it in when app.env is "local".
-        config(['app.env' => 'local']);
         $product = Product::factory()->create();
 
         $this->get(ProductResource::getUrl('index'))->assertOk();
