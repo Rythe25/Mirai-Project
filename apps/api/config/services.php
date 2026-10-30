@@ -45,6 +45,14 @@ return [
         'env' => env('ABA_PAYWAY_ENV', 'sandbox'), // "sandbox" enables manual approval in the backoffice
     ],
 
+    // Google sign-in for storefront customers. A relative redirect is built from the request host, so register both
+    // http://localhost:8000/auth/google/callback and https://mirai-api.kandycode.com/auth/google/callback in Google Cloud.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => '/auth/google/callback',
+    ],
+
     // Staff alerts. Token from @BotFather; chat ID of the orders group (a negative number).
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),

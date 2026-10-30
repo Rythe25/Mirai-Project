@@ -4,12 +4,24 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OrderApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    private User $customer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Checkout needs a signed-in customer.
+        $this->customer = User::factory()->create();
+        $this->actingAs($this->customer);
+    }
 
     private function payload(array $items, array $customer = []): array
     {
@@ -36,6 +48,29 @@ class OrderApiTest extends TestCase
 
         $this->assertMatchesRegularExpression('/^MR-\d{6}$/', $response->json('data.order_no'));
         $this->assertSame(5, $mouse->fresh()->stock); // reduced only when paid
+    }
+
+    public function test_guests_cannot_check_out(): void
+    {
+        auth()->logout();
+        $product = Product::factory()->create();
+
+        $this->postJson('/api/orders', $this->payload([
+            ['product_id' => $product->id, 'qty' => 1],
+        ]))->assertUnauthorized();
+
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_the_order_belongs_to_the_signed_in_customer(): void
+    {
+        $product = Product::factory()->create();
+
+        $this->postJson('/api/orders', $this->payload([
+            ['product_id' => $product->id, 'qty' => 1],
+        ]))->assertCreated();
+
+        $this->assertTrue(Order::sole()->user->is($this->customer));
     }
 
     public function test_duplicate_lines_are_merged(): void

@@ -16,6 +16,7 @@ class OrderController extends Controller
         $order = $placeOrder->handle(
             $request->validated('customer'),
             $request->validated('items'),
+            $request->user(),
         );
 
         return OrderResource::make($order)->response()->setStatusCode(201);

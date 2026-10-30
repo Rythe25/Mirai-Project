@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Behind Cloudflare Tunnel → nginx; honour X-Forwarded-Proto/Host.
         $middleware->trustProxies(at: '*');
+        // Storefront requests (SANCTUM_STATEFUL_DOMAINS) get the session cookie and CSRF check; PayWay's callback doesn't.
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

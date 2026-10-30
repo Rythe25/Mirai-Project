@@ -5,6 +5,7 @@ namespace App\Services\Orders;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -13,15 +14,16 @@ class PlaceOrder
     /**
      * @param  array{name: string, phone: string, email?: ?string}  $customer
      * @param  list<array{product_id: int, qty: int}>  $items
+     * @param  ?User  $user  the signed-in customer (POST /orders always passes one)
      */
-    public function handle(array $customer, array $items): Order
+    public function handle(array $customer, array $items, ?User $user = null): Order
     {
         // Merge duplicate lines for the same product.
         $lines = collect($items)
             ->groupBy('product_id')
             ->map(fn ($group) => (int) $group->sum('qty'));
 
-        return DB::transaction(function () use ($customer, $lines) {
+        return DB::transaction(function () use ($customer, $lines, $user) {
             $products = Product::query()
                 ->active()
                 ->whereKey($lines->keys())
@@ -43,6 +45,7 @@ class PlaceOrder
             }
 
             $order = Order::create([
+                'user_id' => $user?->id,
                 'status' => OrderStatus::Pending,
                 'currency' => 'USD',
                 'customer_name' => $customer['name'],

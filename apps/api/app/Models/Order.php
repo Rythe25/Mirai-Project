@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
@@ -12,7 +13,7 @@ class Order extends Model
     use HasUlids;
 
     protected $fillable = [
-        'status', 'currency', 'subtotal', 'total',
+        'user_id', 'status', 'currency', 'subtotal', 'total',
         'customer_name', 'customer_phone', 'customer_email', 'paid_at',
     ];
 
@@ -44,6 +45,12 @@ class Order extends Model
                 'order_no' => 'MR-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT),
             ])->saveQuietly();
         });
+    }
+
+    /** The customer who checked out; null on guest orders from before sign-in was required. */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function items(): HasMany

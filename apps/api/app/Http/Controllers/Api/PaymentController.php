@@ -13,6 +13,7 @@ use App\Models\Payment;
 use App\Services\Payments\SyncPayment;
 use App\Services\Payway\PaywayClient;
 use App\Services\Payway\PaywayException;
+use App\Support\StorefrontUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -107,9 +108,6 @@ class PaymentController extends Controller
     /** Where PayWay sends the card customer back: the calling storefront if its origin is allowed, else the configured one. */
     private function returnUrl(Request $request, Order $order): string
     {
-        $origin = $request->headers->get('Origin');
-        $storefront = in_array($origin, config('cors.allowed_origins'), true) ? $origin : config('app.storefront_url');
-
-        return rtrim($storefront, '/')."/pay/{$order->public_id}?returned=1";
+        return StorefrontUrl::to($request->headers->get('Origin'), "/pay/{$order->public_id}?returned=1");
     }
 }
