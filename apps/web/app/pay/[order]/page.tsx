@@ -1,11 +1,16 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { api, ApiError, type Payment, type PaymentMethod } from "@/lib/api";
+import {useParams, useRouter} from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import {api, ApiError, type Payment, type PaymentMethod} from "@/lib/api";
 
 /** Posts the signed form to PayWay, like a normal checkout button; PayWay's card page takes over the tab. */
-function submitCheckout({ action, fields }: NonNullable<Payment["checkout"]>) {
+function submitCheckout({action, fields}: NonNullable<Payment["checkout"]>) {
   const form = document.createElement("form");
   form.method = "POST";
   form.action = action;
@@ -22,11 +27,16 @@ function submitCheckout({ action, fields }: NonNullable<Payment["checkout"]>) {
 }
 
 export default function PayPage() {
-  const { order } = useParams<{ order: string }>();
+  const router = useRouter();
+  const {order} = useParams<{order: string}>();
   const [payment, setPayment] = useState<Payment | null>(null);
   const [error, setError] = useState("");
   const [redirecting, setRedirecting] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+
+  function handleReturnClick() {
+    router.push("/shop");
+  }
 
   // KHQR: create the QR, or reuse the open one. Card: get a signed form and go to PayWay.
   // 409 = order already paid, so just show it.
@@ -35,7 +45,7 @@ export default function PayPage() {
       try {
         const result = await api<Payment>(`/orders/${order}/pay`, {
           method: "POST",
-          body: JSON.stringify({ method }),
+          body: JSON.stringify({method}),
         });
         if (result.checkout) {
           setRedirecting(true);
@@ -47,7 +57,9 @@ export default function PayPage() {
         if (e instanceof ApiError && e.status === 409) {
           setPayment(await api<Payment>(`/orders/${order}/payment`));
         } else {
-          setError(e instanceof Error ? e.message : "Could not start the payment.");
+          setError(
+            e instanceof Error ? e.message : "Could not start the payment.",
+          );
         }
       }
     },
@@ -69,7 +81,11 @@ export default function PayPage() {
       if (params.has("returned")) {
         api<Payment>(`/orders/${order}/payment`)
           .then(setPayment)
-          .catch((e) => setError(e instanceof Error ? e.message : "Could not load the payment."));
+          .catch((e) =>
+            setError(
+              e instanceof Error ? e.message : "Could not load the payment.",
+            ),
+          );
       } else {
         void startPayment(params.get("method") === "card" ? "card" : "khqr");
       }
@@ -83,7 +99,9 @@ export default function PayPage() {
   useEffect(() => {
     if (!waiting) return;
     const poll = setInterval(() => {
-      api<Payment>(`/orders/${order}/payment`).then(setPayment).catch(() => {});
+      api<Payment>(`/orders/${order}/payment`)
+        .then(setPayment)
+        .catch(() => {});
     }, 3000);
     const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => {
@@ -92,11 +110,29 @@ export default function PayPage() {
     };
   }, [order, waiting]);
 
-  if (error) return <Shell><p className="text-red-600">{error}</p></Shell>;
-  if (redirecting) return <Shell><p>Taking you to ABA PayWay&apos;s secure card page…</p></Shell>;
-  if (!payment) return <Shell><p>Starting your payment…</p></Shell>;
+  if (error)
+    return (
+      <Shell>
+        <p className="text-red-600">{error}</p>
+      </Shell>
+    );
+  if (redirecting)
+    return (
+      <Shell>
+        <p>Taking you to ABA PayWay&apos;s secure card page…</p>
+      </Shell>
+    );
+  if (!payment)
+    return (
+      <Shell>
+        <p>Starting your payment…</p>
+      </Shell>
+    );
 
-  const left = Math.max(0, Math.floor((Date.parse(payment.expires_at) - now) / 1000));
+  const left = Math.max(
+    0,
+    Math.floor((Date.parse(payment.expires_at) - now) / 1000),
+  );
   const countdown = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
   const isCard = payment.method === "card";
 
@@ -110,10 +146,16 @@ export default function PayPage() {
       {payment.status === "approved" && (
         <>
           <p className="text-lg text-green-600">Paid. Thank you!</p>
-          <a href={`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order}/invoice`} className="underline">
+          <a
+            href={`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${order}/invoice`}
+            className="underline"
+          >
             Download invoice (PDF)
           </a>
-          <p className="text-sm text-zinc-500">If you gave an email, a receipt is on its way.</p>
+          <p className="text-sm text-zinc-500">
+            If you gave an email, a receipt is on its way.
+          </p>
+          <Button onClick={handleReturnClick}>Return to shop</Button>
         </>
       )}
 
@@ -124,8 +166,14 @@ export default function PayPage() {
             <img src={payment.qr_image} alt="ABA KHQR" className="w-64" />
           )}
           <p>Scan with ABA Mobile or any KHQR bank app.</p>
-          <p className="tabular-nums text-sm">{left > 0 ? `Expires in ${countdown}` : "Expired, checking…"}</p>
-          {payment.deeplink && <a href={payment.deeplink} className="underline">Open in ABA Mobile</a>}
+          <p className="tabular-nums text-sm">
+            {left > 0 ? `Expires in ${countdown}` : "Expired, checking…"}
+          </p>
+          {payment.deeplink && (
+            <a href={payment.deeplink} className="underline">
+              Open in ABA Mobile
+            </a>
+          )}
         </>
       )}
 
@@ -133,11 +181,17 @@ export default function PayPage() {
         <>
           <p>Checking your card payment with ABA…</p>
           <p className="tabular-nums text-sm">
-            {left > 0 ? `Payment window closes in ${countdown}` : "Payment window closed, checking…"}
+            {left > 0
+              ? `Payment window closes in ${countdown}`
+              : "Payment window closed, checking…"}
           </p>
-          <p className="text-sm text-zinc-500">Not finished on the card page?</p>
+          <p className="text-sm text-zinc-500">
+            Not finished on the card page?
+          </p>
           <div className="flex gap-2">
-            <Button onClick={() => restart("card")}>Continue to card payment</Button>
+            <Button onClick={() => restart("card")}>
+              Continue to card payment
+            </Button>
             <Button onClick={() => restart("khqr")} secondary>
               Pay with KHQR instead
             </Button>
@@ -172,7 +226,15 @@ export default function PayPage() {
   );
 }
 
-function Button({ onClick, secondary, children }: { onClick: () => void; secondary?: boolean; children: ReactNode }) {
+function Button({
+  onClick,
+  secondary,
+  children,
+}: {
+  onClick: () => void;
+  secondary?: boolean;
+  children: ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
@@ -187,7 +249,7 @@ function Button({ onClick, secondary, children }: { onClick: () => void; seconda
   );
 }
 
-function Shell({ children }: { children: ReactNode }) {
+function Shell({children}: {children: ReactNode}) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center gap-3 px-4 py-10 text-center">
       {children}
